@@ -1,0 +1,22 @@
+TITLE:: SmearView
+summary:: Smear's display
+categories:: Libraries>Smear
+related:: Classes/Smear, Classes/FxParamView, Classes/FxParamPanel
+
+DESCRIPTION::
+What link::Classes/FxParamPanel:: puts at the top of Smear's window. In it, drag up and down for the smear; the wheel for the stretch.
+
+It draws from the object's settings and the replies its meters bring, so it is only live while the window is running; link::Classes/FxParamView:: has the rest.
+
+CLASSMETHODS::
+
+METHOD:: new
+ARGUMENT:: unit
+The link::Classes/Smear::.
+ARGUMENT:: parent
+A view to go in.
+
+INSTANCEMETHODS::
+
+METHOD:: hint
+What the hint bar says over it.

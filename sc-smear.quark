@@ -1,0 +1,11 @@
+(
+	name: "Smear",
+	summary: "a spectral processor that freezes, blurs, scrambles, shifts and combs the sound, as a UGen and as an object, with a window",
+	version: "0.1.0",
+	author: "Francesco Corvi",
+	url: "https://github.com/fracnesco/sc-smear.git",
+	license: "MIT",
+	copyright: "Copyright (c) 2026 Francesco Corvi",
+	schelp: "HelpSource",
+	dependencies: ["https://github.com/fracnesco/sc-fx-kit.git"]
+)
