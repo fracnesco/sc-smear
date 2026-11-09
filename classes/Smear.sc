@@ -33,7 +33,13 @@ Smear : FxParamUnit {
 	*controlName { ^\smear }
 	*hasTail { ^true }
 	*displayClass { ^SmearView }
-	*windowSize { ^Point(860, 500) }
+
+	// parameters renamed on 2026-11-08 so each is a free Tidal word (old -> new):
+	// old presets, sessions and code still reach them
+	*renamed { ^(scramble: \jumble, stretch: \warp, frozen: \freezeOn) }
+
+	// what a Tidal pattern may move through SuperDirtGUI, event by event
+	*tidalParams { ^#[\freezeOn, \hold, \smear, \jumble, \scrambleRate, \shift, \warp, \holes, \teeth, \combWidth, \combRate, \brick, \width, \mix] }
 
 	*params {
 		// labels, sections, sizes and hints are the window's (sc-fx-ui, 2026-11-09);
