@@ -8,8 +8,8 @@ Ndef(\voice, { Smear.ar(Saw.ar([110, 111]) * LFPulse.kr(2).lag(0.01) * 0.2, \sme
 
 m = Smear(Ndef(\voice), \smear);
 m.gui;
-m.frozen = true;                  // hold it
-m.frozen = false;
+m.freezeOn = true;                  // hold it
+m.freezeOn = false;
 m.preset = 'glass choir';
 m.smear = 12; m.shift = 16;
 ```
@@ -50,49 +50,69 @@ Select `Smear` and press cmd/ctrl + d for the help file, and see [examples/smear
 
 ## What it does
 
-The sound is taken apart with an FFT and bent, all of it with SuperCollider's own PV UGens. In order: hold the spectrum (`frozen`, or stepped by `hold`), move it (`shift`), average neighbours (`smear`), swap bins (`scramble`), take random bins away (`holes`), take evenly spaced teeth away (`teeth`), pass only what is over a level (`gate`), and cut from one end (`brick`). All neutral, the wet is the input to within 0.01 dB.
+The sound is taken apart with an FFT and bent, all of it with SuperCollider's own PV UGens. In order: hold the spectrum (`freezeOn`, or stepped by `hold`), move it (`shift`), average neighbours (`smear`), swap bins (`jumble`), take random bins away (`holes`), take evenly spaced teeth away (`teeth`), pass only what is over a level (`gate`), and cut from one end (`brick`). All neutral, the wet is the input to within 0.01 dB.
 
 Two of those needed more than the UGen. `PV_MagFreeze` holds magnitudes but takes its phases from the input, and silence has none to give, so a held note would turn into a buzz at the frame rate. While held, the FFT hears the last moment of sound looped instead. `PV_BinShift` on its own cancels against itself, 66 dB down on a sine, so a phase correction goes with it and `shift` moves in whole bins, about 23 Hz each.
 
-`stretch` multiplies every partial, which is a pitch shift. It is `PitchShift` ahead of the FFT, so it keeps the shift's own graininess and adds 100 ms; a pure tone comes out about 5 dB down with sidebands around it.
+`warp` multiplies every partial, which is a pitch shift. It is `PitchShift` ahead of the FFT, so it keeps the shift's own graininess and adds 100 ms; a pure tone comes out about 5 dB down with sidebands around it.
 
 It costs the FFT's latency, 2048 frames less a block: about 41 ms at 48 kHz. The dry is delayed by as much, so `mix` lines up, and the latency stays while it is in the graph, bypassed or not.
 
 ## The window
 
-`m.gui` opens the top row (on, presets, save, copy, paste), the display, and a row of knobs per section. Hover over anything and the bar at the bottom says what it does.
+`m.gui` opens it (`m.panel(view)` puts the same thing in a view of yours): the top row (on, presets, save, the menu with copy and paste), the display with the in and out meters beside it, and two pages of cards. Hover over anything and the bar at the bottom says what it does.
 
-In the display, drag up and down for the smear; the wheel for the stretch.
+The display is the spectrum, 20 Hz to 20 kHz along, with each of Smear's operations drawn where it acts on it. Top to bottom:
+
+- **the caption** - frozen, stepped (with `hold`) or flowing, then what is on, and at the right what it costs: the FFT's latency at the server's rate.
+- **partials** - the first 48 partials of a 110 Hz note going in, in blue, and where Smear puts them, in pink: moved by `warp` and `shift`, thrown about by `jumble`, widened into a band by `smear`, hollow where `holes`, the comb or the brick wall take them away. It is a picture of the settings, not a measurement; jumble and holes are drawn again at their own rates, so they flicker as the sound does. Frozen, warp has nothing to move, and the lane says so.
+- **the comb** - the line between the two: a notch for every closed tooth, moving with the server's own phase while it runs.
+- **spectrum out** - the output's spectrum, in blue while it flows, the last few readings stacked faintly behind it. Frozen, the picture taken as it froze stays steady in pink over the faint live output. The closed teeth, the side the brick wall takes and what is under the gate are shaded; the gate is a pink line with a handle at its right (parked at the bottom right while it is off), the walls are grips at either edge.
+
+| in the display | does |
+|---|---|
+| click the spectrum | freeze, and let go (`freezeOn`) |
+| drag along it | `shift`, shift for fine |
+| drag it up and down | `smear` |
+| the wheel on it | `jumble` |
+| double click it | shift and smear back to 0 |
+| drag along the partials | `warp`, shift for fine; the wheel a semitone; double click back to 1x |
+| drag the gate's line or handle | `gate`, shift for fine; the wheel a dB; double click off |
+| drag a wall's grip | the brick wall (`brick`), from the bottom or the top; double click takes it away |
+
+A drag on the spectrum moves one thing: the first few pixels choose along (shift) or up and down (smear).
+
+Page **freeze & blur**: *freeze* - the freeze pad (click it, or hold it down to freeze only while you hold), hold - then *pitch* - shift, warp - and *blur* - smear, jumble, reach, shuffle, diffuse. Page **tear & cut**: *holes* - holes, flicker - *comb* - comb, open, sweep - and *cut* - gate, brick. The *output* card is on both: width, mix, output. What does nothing at the moment is dimmed: hold and warp while it is frozen, reach and shuffle with no jumble, flicker with no holes, open and sweep with the comb off.
 
 ## Presets
 
 Built in: default, held breath, stepped ghost, melted, glass choir, bin shuffle, sinking, swiss cheese, sweeping comb, top partials.
 
-Yours go in `Platform.userAppSupportDir/smear-presets.scd`: `m.saveAsPreset("mine")`, or type a name in the window and press save. `m.copySettings` and `other.pasteSettings` carry settings from one to another.
+Yours go in `Platform.userAppSupportDir/smear-presets.scd`: `m.saveAsPreset("mine")`, or press save in the window and give it a name. `m.copySettings` and `other.pasteSettings` carry settings from one to another.
 
 ## Parameters
 
-Every parameter is a property: `m.frozen`, `m.frozen = ...`. These also work by name, `m.set(\frozen, ...)`, `m.get(\frozen)`. Knobs clip to their range. This table is generated from the class.
+Every parameter is a property: `m.freezeOn`, `m.freezeOn = ...`. These also work by name, `m.set(\freezeOn, ...)`, `m.get(\freezeOn)`. Knobs clip to their range. This table is generated from the class.
 
 | parameter | section | range | default | what it does |
 |---|---|---|---|---|
-| `frozen` | time | on / off | false | hold this spectrum, for as long as it is on |
-| `hold` | time | 0 .. 30 Hz | 0 | take a new spectrum this often and hold it in between: 0 is off |
-| `smear` | time | 0 .. 64 bins | 0 | how many bins each side are averaged in |
-| `scramble` | time | 0 .. 1 | 0 | how many bins are swapped |
-| `scrambleWidth` | time | 0.01 .. 1 | 0.2 | how far apart they may be |
-| `scrambleRate` | time | 0.1 .. 30 Hz | 4 | how often a new order is drawn |
-| `diffuse` | time | on / off | false | new phases, from time to time: transients wash away |
-| `shift` | pitch | -256 .. 256 bins | 0 | add this many bins to every partial, about 23 Hz each: harmonics stop being harmonics |
-| `stretch` | pitch | 0.25 .. 4 x | 1 | multiply every partial: a pitch shift, with its own 100 ms of delay |
-| `holes` | pitch | 0 .. 1 | 0 | how many bins are taken away at random |
-| `holesRate` | pitch | 0.1 .. 30 Hz | 2 | how often new ones are drawn |
-| `teeth` | pitch | 0 .. 48 | 0 | how many teeth are taken out of the spectrum: 0 is none |
-| `combWidth` | pitch | 0.02 .. 0.98 | 0.5 | how much of each tooth passes |
-| `combRate` | pitch | 0 .. 8 Hz | 0.25 | how quickly the teeth move |
-| `gate` | output | -96 .. 0 dB | -96 | only what is over this comes through: the loudest partials |
-| `brick` | output | -1 .. 1 | 0 | under 0 takes the top of the spectrum off, over 0 the bottom |
-| `width` | output | 0 .. 2 | 1 | how far apart the sides are |
+| `freezeOn` | freeze | on / off | false | hold the spectrum as it is now, for as long as the pad is lit - hold the pad down to freeze only while you hold it; or click the display |
+| `hold` | freeze | 0 .. 30 Hz | 0 | take a new spectrum this often and hold it in between: a stepped, slowed down ghost of the input; 0 is off |
+| `smear` | blur | 0 .. 64 bins | 0 | how many bins each side every bin is averaged with: partials melt into bands - or drag up and down in the display |
+| `jumble` | blur | 0 .. 1 | 0 | how many bins swap places, at random - or the wheel in the display |
+| `scrambleWidth` | blur | 0.01 .. 1 | 0.2 | how far a jumbled bin may land from where it was, as a share of the spectrum |
+| `scrambleRate` | blur | 0.1 .. 30 Hz | 4 | how often a new jumble is drawn |
+| `diffuse` | blur | on / off | false | new random phases twice a second: transients wash away |
+| `shift` | pitch | -256 .. 256 bins | 0 | add this many bins to every partial, about 23 Hz each at 48 kHz: harmonics stop being harmonics - or drag along the display |
+| `warp` | pitch | 0.25 .. 4 x | 1 | multiply every partial: a pitch shift, ahead of the freeze, with 100 ms of delay of its own - or drag along the partials in the display |
+| `holes` | holes | 0 .. 1 | 0 | how many bins are taken away, at random |
+| `holesRate` | holes | 0.1 .. 30 Hz | 2 | how often new holes are drawn |
+| `teeth` | comb | 0 .. 48 teeth | 0 | how many teeth the comb takes out of the spectrum, evenly spaced; 0 is none |
+| `combWidth` | comb | 0.02 .. 0.98 | 0.5 | how much of each tooth lets sound through |
+| `combRate` | comb | 0 .. 8 Hz | 0.25 | how fast the teeth move up the spectrum; 0 holds them still |
+| `gate` | cut | -96 .. 0 dB | -96 | only partials louder than this come through; -96 is off - or drag its line in the display |
+| `brick` | cut | -1 .. 1 | 0 | a brick wall: under 0 it takes the top of the spectrum off, over 0 the bottom - or drag a wall in the display |
+| `width` | output | 0 .. 2 | 1 | how far apart the sides are: 0 is mono, 100 % as it came |
 | `mix` | output | 0 .. 1 | 1 | how much of the effect goes out, against the dry signal |
 | `output` | output | -36 .. 24 dB | 0 | the level of the whole thing, in dB |
 

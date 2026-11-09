@@ -1,12 +1,31 @@
 TITLE:: SmearView
-summary:: Smear's display
+summary:: Smear's display: the spectrum coming out, with every operation drawn where it acts
 categories:: Libraries>Smear
-related:: Classes/Smear, Classes/FxParamView, Classes/FxParamPanel
+related:: Classes/Smear, Classes/FxParamView, Classes/FxDevicePanel
 
 DESCRIPTION::
-What link::Classes/FxParamPanel:: puts at the top of Smear's window. In it, drag up and down for the smear; the wheel for the stretch.
+What link::Classes/FxDevicePanel:: puts at the top of Smear's window: the spectrum, 20 Hz to 20 kHz along on a log ruler, with each of Smear's operations drawn where it acts on it. Top to bottom:
 
-It draws from the object's settings and the replies its meters bring, so it is only live while the window is running; link::Classes/FxParamView:: has the rest.
+table::
+## strong::caption:: || frozen, stepped (with code::hold::) or flowing, then what is on; at the right what it costs, the FFT's latency at the server's rate
+## strong::partials:: || the first 48 partials of a 110 Hz note going in (blue) and where Smear puts them (pink): moved by code::warp:: and code::shift::, thrown about by code::jumble::, widened into a band by code::smear::, hollow where code::holes::, the comb or the brick wall take them away. A picture of the settings, not a measurement: jumble and holes are drawn again at their own rates
+## strong::comb:: || the line between the two: a notch for every closed tooth, moving with the server's own phase while it runs
+## strong::spectrum out:: || the output's spectrum, blue while it flows, the last few readings stacked faintly behind it; frozen, the picture taken as it froze stays steady in pink over the faint live output. The closed teeth, the side the brick wall takes and what is under the gate are shaded; the gate is a line with a handle at its right (bottom right while off), the walls are grips at either edge
+::
+
+table::
+## strong::in the display:: || strong::does::
+## click the spectrum || freeze, and let go (code::freezeOn::)
+## drag along it || code::shift::, shift for fine
+## drag it up and down || code::smear:: - the first few pixels of a drag choose which
+## the wheel on it || code::jumble::
+## double click it || shift and smear back to 0
+## drag along the partials || code::warp::, shift for fine; the wheel a semitone; double click back to 1x
+## drag the gate's line or handle || code::gate::, shift for fine; the wheel a dB; double click off
+## drag a wall's grip || the brick wall (code::brick::), from the bottom or the top; double click takes it away
+::
+
+It draws from the object's settings, the output's spectrum (a link::Classes/ParaEQSpectrum::, running only while the window is) and the replies its meters bring: whether it is held, and where the comb's teeth are. So it is only live while the window is running; link::Classes/FxParamView:: has the rest.
 
 CLASSMETHODS::
 
@@ -16,7 +35,23 @@ The link::Classes/Smear::.
 ARGUMENT:: parent
 A view to go in.
 
+METHOD:: note
+The note whose partials the top lane follows, in Hz: 110.
+
+METHOD:: numPartials
+How many of its partials are drawn: 48.
+
+METHOD:: gateOffset
+How far over the gate's setting a sine has to be to come through, in dB (about 3.9: code::PV_MagAbove:: on a sine-windowed frame). The gate's line is drawn that far up, on the spectrum's scale.
+
 INSTANCEMETHODS::
 
 METHOD:: hint
-What the hint bar says over it.
+What the hint bar says over it: what is under the pointer and what dragging there does.
+ARGUMENT:: x
+The pointer, in the view.
+ARGUMENT:: y
+The pointer, in the view.
+
+METHOD:: levelsArrived
+Called on every meter reply: keeps the last few spectra for the stack behind the live one, and takes the held picture in the first moments of a freeze.

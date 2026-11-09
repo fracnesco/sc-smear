@@ -1,7 +1,7 @@
 TITLE:: Smear
 summary:: a spectral processor that freezes, blurs, scrambles, shifts and combs the sound, as a UGen and as an object, with a window
 categories:: Libraries>Smear
-related:: Classes/FxParamUnit, Classes/SmearView, Classes/FxUnit, Classes/FxChain
+related:: Classes/FxParamUnit, Classes/SmearView, Classes/FxDevicePanel, Classes/FxUnit, Classes/FxChain
 
 DESCRIPTION::
 A spectral processor - freeze, blur, scramble, shift, comb - running anywhere a UGen does, with a window.
@@ -11,45 +11,45 @@ Ndef(\voice, { Smear.ar(Saw.ar([110, 111]) * LFPulse.kr(2).lag(0.01) * 0.2, \sme
 
 m = Smear(Ndef(\voice), \smear);
 m.gui;
-m.frozen = true;                  // hold it
-m.frozen = false;
+m.freezeOn = true;                  // hold it
+m.freezeOn = false;
 m.preset = 'glass choir';
 m.smear = 12; m.shift = 16;
 ::
 
-The sound is taken apart with an FFT and bent, all of it with SuperCollider's own PV UGens. In order: hold the spectrum (code::frozen::, or stepped by code::hold::), move it (code::shift::), average neighbours (code::smear::), swap bins (code::scramble::), take random bins away (code::holes::), take evenly spaced teeth away (code::teeth::), pass only what is over a level (code::gate::), and cut from one end (code::brick::). All neutral, the wet is the input to within 0.01 dB.
+The sound is taken apart with an FFT and bent, all of it with SuperCollider's own PV UGens. In order: hold the spectrum (code::freezeOn::, or stepped by code::hold::), move it (code::shift::), average neighbours (code::smear::), swap bins (code::jumble::), take random bins away (code::holes::), take evenly spaced teeth away (code::teeth::), pass only what is over a level (code::gate::), and cut from one end (code::brick::). All neutral, the wet is the input to within 0.01 dB.
 
 Two of those needed more than the UGen. code::PV_MagFreeze:: holds magnitudes but takes its phases from the input, and silence has none to give, so a held note would turn into a buzz at the frame rate. While held, the FFT hears the last moment of sound looped instead. code::PV_BinShift:: on its own cancels against itself, 66 dB down on a sine, so a phase correction goes with it and code::shift:: moves in whole bins, about 23 Hz each.
 
-code::stretch:: multiplies every partial, which is a pitch shift. It is code::PitchShift:: ahead of the FFT, so it keeps the shift's own graininess and adds 100 ms; a pure tone comes out about 5 dB down with sidebands around it.
+code::warp:: multiplies every partial, which is a pitch shift. It is code::PitchShift:: ahead of the FFT, so it keeps the shift's own graininess and adds 100 ms; a pure tone comes out about 5 dB down with sidebands around it.
 
 It costs the FFT's latency, 2048 frames less a block: about 41 ms at 48 kHz. The dry is delayed by as much, so code::mix:: lines up, and the latency stays while it is in the graph, bypassed or not.
 
 subsection:: The object and the UGen
-It is an link::Classes/FxParamUnit::, so everything that class documents works here: code::Smear.ar(in, name)::, code::Smear(node, name)::, code::Smear.onBus(bus, numChannels)::, presets, the clipboard, code::gui::. Its window's display is a link::Classes/SmearView::.
+It is an link::Classes/FxParamUnit::, so everything that class documents works here: code::Smear.ar(in, name)::, code::Smear(node, name)::, code::Smear.onBus(bus, numChannels)::, presets, the clipboard, code::gui::. Its window is an link::Classes/FxDevicePanel:: in two pages - freeze & blur, tear & cut - with the freeze as a pad, smear and shift as the big knobs, and a link::Classes/SmearView:: as its display, where the spectrum is played: click to freeze, drag for shift and smear.
 
 subsection:: Parameters
 Each is a property of the object: read it, set it. The numbers are in the order of the node's control, which is what saved node maps carry. Internal ones without a knob, if any, are described above.
 
 table::
 ## strong::parameter:: || strong::range:: || strong::default:: || strong::what it does::
-## code::frozen:: || on / off || false || hold this spectrum, for as long as it is on
-## code::hold:: || 0 .. 30 Hz || 0 || take a new spectrum this often and hold it in between: 0 is off
-## code::smear:: || 0 .. 64 bins || 0 || how many bins each side are averaged in
-## code::scramble:: || 0 .. 1 || 0 || how many bins are swapped
-## code::scrambleWidth:: || 0.01 .. 1 || 0.2 || how far apart they may be
-## code::scrambleRate:: || 0.1 .. 30 Hz || 4 || how often a new order is drawn
-## code::diffuse:: || on / off || false || new phases, from time to time: transients wash away
-## code::shift:: || -256 .. 256 bins || 0 || add this many bins to every partial, about 23 Hz each: harmonics stop being harmonics
-## code::stretch:: || 0.25 .. 4 x || 1 || multiply every partial: a pitch shift, with its own 100 ms of delay
-## code::holes:: || 0 .. 1 || 0 || how many bins are taken away at random
-## code::holesRate:: || 0.1 .. 30 Hz || 2 || how often new ones are drawn
-## code::teeth:: || 0 .. 48 || 0 || how many teeth are taken out of the spectrum: 0 is none
-## code::combWidth:: || 0.02 .. 0.98 || 0.5 || how much of each tooth passes
-## code::combRate:: || 0 .. 8 Hz || 0.25 || how quickly the teeth move
-## code::gate:: || -96 .. 0 dB || -96 || only what is over this comes through: the loudest partials
-## code::brick:: || -1 .. 1 || 0 || under 0 takes the top of the spectrum off, over 0 the bottom
-## code::width:: || 0 .. 2 || 1 || how far apart the sides are
+## code::freezeOn:: || on / off || false || hold the spectrum as it is now, for as long as the pad is lit - hold the pad down to freeze only while you hold it; or click the display
+## code::hold:: || 0 .. 30 Hz || 0 || take a new spectrum this often and hold it in between: a stepped, slowed down ghost of the input; 0 is off
+## code::smear:: || 0 .. 64 bins || 0 || how many bins each side every bin is averaged with: partials melt into bands - or drag up and down in the display
+## code::jumble:: || 0 .. 1 || 0 || how many bins swap places, at random - or the wheel in the display
+## code::scrambleWidth:: || 0.01 .. 1 || 0.2 || how far a jumbled bin may land from where it was, as a share of the spectrum
+## code::scrambleRate:: || 0.1 .. 30 Hz || 4 || how often a new jumble is drawn
+## code::diffuse:: || on / off || false || new random phases twice a second: transients wash away
+## code::shift:: || -256 .. 256 bins || 0 || add this many bins to every partial, about 23 Hz each at 48 kHz: harmonics stop being harmonics - or drag along the display
+## code::warp:: || 0.25 .. 4 x || 1 || multiply every partial: a pitch shift, ahead of the freeze, with 100 ms of delay of its own - or drag along the partials in the display
+## code::holes:: || 0 .. 1 || 0 || how many bins are taken away, at random
+## code::holesRate:: || 0.1 .. 30 Hz || 2 || how often new holes are drawn
+## code::teeth:: || 0 .. 48 teeth || 0 || how many teeth the comb takes out of the spectrum, evenly spaced; 0 is none
+## code::combWidth:: || 0.02 .. 0.98 || 0.5 || how much of each tooth lets sound through
+## code::combRate:: || 0 .. 8 Hz || 0.25 || how fast the teeth move up the spectrum; 0 holds them still
+## code::gate:: || -96 .. 0 dB || -96 || only partials louder than this come through; -96 is off - or drag its line in the display
+## code::brick:: || -1 .. 1 || 0 || a brick wall: under 0 it takes the top of the spectrum off, over 0 the bottom - or drag a wall in the display
+## code::width:: || 0 .. 2 || 1 || how far apart the sides are: 0 is mono, 100 % as it came
 ## code::mix:: || 0 .. 1 || 1 || how much of the effect goes out, against the dry signal
 ## code::output:: || -36 .. 24 dB || 0 || the level of the whole thing, in dB
 ::

@@ -16,8 +16,8 @@ Ndef(\voice, { Smear.ar(Saw.ar([110, 111]) * LFPulse.kr(2).lag(0.01) * 0.2, \sme
 
 // ---- 2. settings: each is a property, each moves the window
 (
-~m.frozen = true;                  // hold it
-~m.frozen = false;
+~m.freezeOn = true;                  // hold it
+~m.freezeOn = false;
 ~m.preset = 'glass choir';
 ~m.smear = 12; ~m.shift = 16;
 )
