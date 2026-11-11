@@ -2,6 +2,8 @@
 
 **A spectral processor - freeze, blur, scramble, shift, comb - running anywhere a UGen does, with a window.** A SuperCollider extension.
 
+![Smear's window](images/smear.png)
+
 ```supercollider
 s.boot;
 Ndef(\voice, { Smear.ar(Saw.ar([110, 111]) * LFPulse.kr(2).lag(0.01) * 0.2, \smear) }).play;
@@ -127,6 +129,7 @@ Every parameter is a property: `m.freezeOn`, `m.freezeOn = ...`. These also work
 | [examples/smear-demo.scd](examples/smear-demo.scd) | a walkthrough, one block at a time |
 | [install.scd](install.scd) | the symlink, a check, an uninstall |
 | [sc-smear.quark](sc-smear.quark) | the quark manifest |
+| [images/](images/) | the screenshots in this README |
 
 ## License
 
